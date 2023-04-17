@@ -10,11 +10,13 @@ import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 late final WebSocket ws;
+int _counterValue = 0;
 
 // Configure routes.
 final _router = Router()
   ..get('/', _rootHandler)
   ..get('/echo/<message>', _echoHandler)
+  ..get('/ws2', webSocketHandler(_wsHandler2))
   ..get('/ws', webSocketHandler(_wsHandler));
 
 Response _rootHandler(Request req) {
@@ -24,6 +26,24 @@ Response _rootHandler(Request req) {
 Response _echoHandler(Request request) {
   final message = request.params['message'];
   return Response.ok('$message\n');
+}
+
+void _wsHandler2(WebSocketChannel webSocket) {
+  webSocket.sink.add(_counterValue.toString());
+  stdout.writeln('[CONNECTED] ');
+  webSocket.stream.listen((dynamic message) {
+    stdout.writeln('[RECIEVED]');
+    // webSocket.sink.add('echo $message');
+    if (message == 'increment') {
+      _counterValue++;
+      webSocket.sink.add(_counterValue.toString());
+    } else if (message == 'decrease') {
+      _counterValue--;
+      webSocket.sink.add(_counterValue.toString());
+    } else {
+      webSocket.sink.add('you sent this $message');
+    }
+  });
 }
 
 Future<void> _wsHandler(WebSocketChannel webSocket) async {

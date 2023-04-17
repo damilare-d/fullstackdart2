@@ -46,8 +46,11 @@ class _MyHomePageState extends State<MyHomePage> {
     // TODO: implement initState
     super.initState();
     _channel = WebSocketChannel.connect(
-      Uri.parse('ws://localhost:8080/ws'),
+      Uri.parse('ws://localhost:8080/ws2'),
     );
+    _channel.stream.listen((value) => setState(() {
+          _counter = int.tryParse(value) ?? _counter;
+        }));
     // _channel.stream.listen((value) => setState(() {
     //       _messages.add(value);
     //     }));
@@ -68,16 +71,22 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _incrementCounter() {
     setState(() {
-      _counter++;
+      // _counter++;
       _channel.sink.add('increment');
     });
   }
 
   void _decrementCounter() {
     setState(() {
-      _counter--;
-      _channel.sink.add('increment');
+      // _counter--;
+      _channel.sink.add('decrease');
     });
+  }
+
+  void _sendMessage2() {
+    if (_controller.text.isNotEmpty) {
+      _channel.sink.add(_controller.text);
+    }
   }
 
   void _sendMessage() {
@@ -122,26 +131,26 @@ class _MyHomePageState extends State<MyHomePage> {
               'Message sent: ${dmessage ?? ''}',
               style: const TextStyle(fontSize: 18),
             ),
-            StreamBuilder(
-              stream: _channel.stream,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.active &&
-                    snapshot.hasData) {
-                  final message = snapshot.data;
-                  return Text(message ?? 'message is null');
-                } else {
-                  return const SizedBox(child: Text('message not recieved'));
-                }
-              },
-            ),
-            ListView.builder(
-              shrinkWrap: true,
-              itemExtent: 5,
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                return Text(_messages[index]);
-              },
-            ),
+            // StreamBuilder(
+            //   stream: _channel.stream,
+            //   builder: (context, snapshot) {
+            //     if (snapshot.connectionState == ConnectionState.active &&
+            //         snapshot.hasData) {
+            //       final message = snapshot.data;
+            //       return Text(message ?? 'message is null');
+            //     } else {
+            //       return const SizedBox(child: Text('message not recieved'));
+            //     }
+            //   },
+            // ),
+            // ListView.builder(
+            //   shrinkWrap: true,
+            //   itemExtent: 5,
+            //   itemCount: _messages.length,
+            //   itemBuilder: (context, index) {
+            //     return Text(_messages[index]);
+            //   },
+            // ),
             const SizedBox(
               height: 20,
             ),
@@ -149,7 +158,7 @@ class _MyHomePageState extends State<MyHomePage> {
               'You have pushed the button this many times:',
             ),
             Text(
-              _counter.toString(),
+              _counter.toString() ?? 'loading...',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
           ],
@@ -164,7 +173,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: const Icon(Icons.add),
           ),
           FloatingActionButton(
-            onPressed: _sendMessage,
+            onPressed: _sendMessage2,
             tooltip: 'send message',
             child: const Icon(Icons.send),
           ),
